@@ -570,10 +570,10 @@
 
 <script>
 // ── Utilities ──────────────────────────────────────────
-function fmtTime(minutes) {
-  if (!minutes || minutes <= 0) return '—';
-  const h = Math.floor(minutes / 60);
-  const m = Math.round(minutes % 60);
+function fmtTime(seconds) {
+  if (!seconds || seconds <= 0) return '—';
+  const h = Math.floor(seconds / 3600);
+  const m = Math.round((seconds % 3600) / 60);
   if (h === 0) return `${m}m`;
   return m === 0 ? `${h}h` : `${h}h ${m}m`;
 }
