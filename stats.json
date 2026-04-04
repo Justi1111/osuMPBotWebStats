@@ -1,0 +1,130 @@
+{
+  "players": {
+    "-Justi-": {
+      "time_in_lobby": 2536.068158388138,
+      "wins": 0,
+      "matches_played": 2,
+      "aborts_voted": 0,
+      "skips_voted": 0
+    },
+    "potar": {
+      "time_in_lobby": 1.8326523303985596,
+      "wins": 0,
+      "matches_played": 0,
+      "aborts_voted": 0,
+      "skips_voted": 0
+    },
+    "iriska333-": {
+      "time_in_lobby": 13.274581670761108,
+      "wins": 0,
+      "matches_played": 0,
+      "aborts_voted": 0,
+      "skips_voted": 0
+    },
+    "makosguba12": {
+      "time_in_lobby": 325.6130921840668,
+      "wins": 0,
+      "matches_played": 2,
+      "aborts_voted": 0,
+      "skips_voted": 0
+    },
+    "tolum": {
+      "time_in_lobby": 1.9153058528900146,
+      "wins": 0,
+      "matches_played": 0,
+      "aborts_voted": 0,
+      "skips_voted": 0
+    },
+    "Godlyy-": {
+      "time_in_lobby": 7.681942462921143,
+      "wins": 0,
+      "matches_played": 0,
+      "aborts_voted": 0,
+      "skips_voted": 0
+    },
+    "[KonjikinoYami]": {
+      "time_in_lobby": 9.470546245574951,
+      "wins": 0,
+      "matches_played": 0,
+      "aborts_voted": 0,
+      "skips_voted": 0
+    },
+    "kir kanekidjfjd": {
+      "time_in_lobby": 64.01260781288147,
+      "wins": 0,
+      "matches_played": 0,
+      "aborts_voted": 0,
+      "skips_voted": 0
+    },
+    "Kaqwi": {
+      "time_in_lobby": 62.876121044158936,
+      "wins": 0,
+      "matches_played": 0,
+      "aborts_voted": 0,
+      "skips_voted": 0
+    },
+    "JERSON ": {
+      "time_in_lobby": 4.606219053268433,
+      "wins": 0,
+      "matches_played": 0,
+      "aborts_voted": 0,
+      "skips_voted": 0
+    },
+    "zmfltmxpf": {
+      "time_in_lobby": 0,
+      "wins": 0,
+      "matches_played": 6,
+      "aborts_voted": 0,
+      "skips_voted": 0
+    },
+    "greyloser": {
+      "time_in_lobby": 0,
+      "wins": 0,
+      "matches_played": 6,
+      "aborts_voted": 0,
+      "skips_voted": 0
+    },
+    "dope": {
+      "time_in_lobby": 400.6639997959137,
+      "wins": 0,
+      "matches_played": 2,
+      "aborts_voted": 0,
+      "skips_voted": 0
+    }
+  },
+  "room": {
+    "peak_players": 4,
+    "total_aborts": 0,
+    "total_skips": 0,
+    "maps": {
+      "4980060": {
+        "title": "OnLoong - BTMC Reacts to BTMC Reaction [Reaction]",
+        "times_played": 1
+      },
+      "1211828": {
+        "title": "TERRASPEX - AMAZING BREAK [DESPAIR]",
+        "times_played": 1
+      },
+      "5105297": {
+        "title": "namigroove feat. KAFU - uyuyu(';w;`) [Expert]",
+        "times_played": 2
+      },
+      "2022061": {
+        "title": "goreshit - i love you more each time you die [eternal love]",
+        "times_played": 1
+      },
+      "129891": {
+        "title": "xi - FREEDOM DiVE [FOUR DIMENSIONS]",
+        "times_played": 1
+      },
+      "1128411": {
+        "title": "SakiZ - osu!memories [Happy Memories]",
+        "times_played": 1
+      },
+      "2139556": {
+        "title": "DJ Sharpnel - Back to the gate [Leave from the solitude]",
+        "times_played": 1
+      }
+    }
+  }
+}
