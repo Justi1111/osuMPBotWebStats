@@ -1,0 +1,26 @@
+[
+  {
+    "username": "-Justi-",
+    "time": "2025-03-20T14:32:00",
+    "text": "Bot kicked me from the lobby without reason after I typed !skip",
+    "fixed": false
+  },
+  {
+    "username": "zmfltmxpf",
+    "time": "2025-03-18T09:15:00",
+    "text": "Vote abort didn't register even though 3/4 players voted",
+    "fixed": true
+  },
+  {
+    "username": "greyloser",
+    "time": "2025-03-21T22:47:00",
+    "text": "Map picker selected a map way above the star rating limit",
+    "fixed": false
+  },
+  {
+    "username": "makosguba12",
+    "time": "2025-03-22T11:05:00",
+    "text": "Bot stopped responding to commands after host transfer",
+    "fixed": true
+  }
+]

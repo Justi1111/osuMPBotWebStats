@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>osu! MP Lobby Stats</title>
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:        #1a1720;
+      --bg2:       #211d2d;
+      --bg3:       #2b2640;
+      --bg4:       #342f50;
+      --border:    #3e3860;
+      --pink:      #ff66ab;
+      --purple:    #b06ef0;
+      --pink-glow: rgba(255, 102, 171, 0.18);
+      --purple-glow: rgba(176, 110, 240, 0.18);
+      --text:      #e6e2f5;
+      --text2:     #9a94b8;
+      --text3:     #625e7a;
+      --green:     #4ade80;
+      --green-dim: rgba(74, 222, 128, 0.12);
+      --red:       #f87171;
+      --grad:      linear-gradient(135deg, #ff66ab, #b06ef0);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: linear-gradient(180deg, #120f1c 0%, var(--bg2) 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--grad);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 15px;
+      letter-spacing: -0.5px;
+      color: #fff;
+      flex-shrink: 0;
+      box-shadow: 0 0 20px rgba(255, 102, 171, 0.4);
+      user-select: none;
+    }
+
+    .header-title {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header-title h1 {
+      font-size: 18px;
+      font-weight: 700;
+      background: var(--grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.2;
+    }
+
+    .header-title span {
+      font-size: 12px;
+      color: var(--text3);
+      font-weight: 400;
+    }
+
+    .header-badge {
+      margin-left: auto;
+      background: var(--pink-glow);
+      border: 1px solid rgba(255, 102, 171, 0.3);
+      color: var(--pink);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    /* ── TABS ── */
+    nav {
+      display: flex;
+      gap: 4px;
+      padding: 16px 32px 0;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--text2);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 20px;
+      cursor: pointer;
+      border-radius: 8px 8px 0 0;
+      position: relative;
+      transition: color .2s, background .2s;
+      letter-spacing: 0.3px;
+    }
+
+    .tab-btn:hover { color: var(--text); background: rgba(255,255,255,.04); }
+
+    .tab-btn.active {
+      color: var(--pink);
+      background: rgba(255, 102, 171, 0.08);
+    }
+
+    .tab-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0; right: 0;
+      height: 2px;
+      background: var(--grad);
+      border-radius: 2px 2px 0 0;
+    }
+
+    /* ── MAIN ── */
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── SECTION TITLE ── */
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--text3);
+      margin-bottom: 16px;
+    }
+
+    /* ── SEARCH ── */
+    .search-wrap {
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .search-wrap svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text3);
+      pointer-events: none;
+    }
+
+    #playerSearch {
+      width: 100%;
+      max-width: 360px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px 10px 40px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    #playerSearch::placeholder { color: var(--text3); }
+
+    #playerSearch:focus {
+      border-color: var(--pink);
+      box-shadow: 0 0 0 3px rgba(255, 102, 171, 0.12);
+    }
+
+    /* ── TABLE ── */
+    .table-wrap {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead th {
+      background: var(--bg3);
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--text2);
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+      transition: color .15s;
+    }
+
+    thead th:hover { color: var(--pink); }
+    thead th.sort-asc::after  { content: ' ↑'; color: var(--pink); }
+    thead th.sort-desc::after { content: ' ↓'; color: var(--pink); }
+
+    tbody tr {
+      border-top: 1px solid rgba(255,255,255,.04);
+      transition: background .15s;
+    }
+
+    tbody tr:hover { background: rgba(255,255,255,.03); }
+
+    td {
+      padding: 11px 16px;
+      color: var(--text);
+    }
+
+    .td-username {
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .rank-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .rank-1 { background: rgba(255,215,0,.15);  color: #ffd700; }
+    .rank-2 { background: rgba(192,192,192,.15); color: #c0c0c0; }
+    .rank-3 { background: rgba(205,127,50,.15);  color: #cd7f32; }
+    .rank-n { background: var(--bg4); color: var(--text3); }
+
+    .td-num { color: var(--text2); font-variant-numeric: tabular-nums; }
+    .td-wins { color: var(--pink); font-weight: 600; }
+
+    .empty-row td {
+      text-align: center;
+      padding: 40px;
+      color: var(--text3);
+      font-size: 13px;
+    }
+
+    /* ── ROOM STATS ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: border-color .2s, transform .15s;
+    }
+
+    .stat-card:hover {
+      border-color: rgba(255,102,171,.35);
+      transform: translateY(-2px);
+    }
+
+    .stat-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--text3);
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      background: var(--grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.1;
+    }
+
+    /* ── MAP LIST ── */
+    .map-list {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .map-list-header {
+      background: var(--bg3);
+      padding: 12px 20px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--text2);
+    }
+
+    .map-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 20px;
+      border-top: 1px solid rgba(255,255,255,.04);
+      transition: background .15s;
+    }
+
+    .map-item:hover { background: rgba(255,255,255,.03); }
+
+    .map-rank {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text3);
+      width: 20px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .map-info { flex: 1; min-width: 0; }
+
+    .map-title {
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text);
+    }
+
+    .map-id {
+      font-size: 11px;
+      color: var(--text3);
+      margin-top: 2px;
+    }
+
+    .map-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .map-bar {
+      width: 100px;
+      height: 5px;
+      background: var(--bg4);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .map-bar-fill {
+      height: 100%;
+      background: var(--grad);
+      border-radius: 3px;
+      transition: width .4s ease;
+    }
+
+    .map-count {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--pink);
+      min-width: 36px;
+      text-align: right;
+    }
+
+    /* ── BUG REPORTS ── */
+    .bug-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .bug-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 20px;
+      transition: border-color .2s;
+    }
+
+    .bug-card.fixed {
+      opacity: .6;
+      border-color: rgba(74,222,128,.2);
+    }
+
+    .bug-card:not(.fixed):hover {
+      border-color: rgba(255,102,171,.35);
+    }
+
+    .bug-card.fixed:hover {
+      opacity: .75;
+    }
+
+    .bug-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .bug-user {
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--pink);
+    }
+
+    .bug-time {
+      font-size: 11px;
+      color: var(--text3);
+      margin-left: auto;
+    }
+
+    .bug-status {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 20px;
+    }
+
+    .bug-status.fixed {
+      background: var(--green-dim);
+      color: var(--green);
+      border: 1px solid rgba(74,222,128,.25);
+    }
+
+    .bug-status.open {
+      background: rgba(248,113,113,.12);
+      color: var(--red);
+      border: 1px solid rgba(248,113,113,.25);
+    }
+
+    .bug-text {
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.6;
+    }
+
+    .bug-card:not(.fixed) .bug-text { color: var(--text); }
+
+    .no-bugs {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text3);
+      font-size: 14px;
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 640px) {
+      header { padding: 14px 16px; }
+      nav    { padding: 12px 16px 0; }
+      main   { padding: 20px 12px; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .map-bar-wrap { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">osu!</div>
+  <div class="header-title">
+    <h1>MP Lobby Stats</h1>
+    <span id="headerSub">Loading…</span>
+  </div>
+  <div class="header-badge" id="headerBadge">LIVE</div>
+</header>
+
+<nav>
+  <button class="tab-btn active" data-tab="players">Players</button>
+  <button class="tab-btn" data-tab="room">Room Stats</button>
+  <button class="tab-btn" data-tab="bugs">Bug Reports</button>
+</nav>
+
+<main>
+
+  <!-- ── PLAYERS ── -->
+  <div class="tab-panel active" id="tab-players">
+    <div class="search-wrap">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input id="playerSearch" type="text" placeholder="Search players…" autocomplete="off" />
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th data-col="rank">#</th>
+            <th data-col="username">Player</th>
+            <th data-col="wins">Wins</th>
+            <th data-col="matches_played">Matches</th>
+            <th data-col="time_in_lobby">Time in Lobby</th>
+            <th data-col="skips_voted">Skips</th>
+            <th data-col="aborts_voted">Aborts</th>
+          </tr>
+        </thead>
+        <tbody id="playerTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── ROOM STATS ── -->
+  <div class="tab-panel" id="tab-room">
+    <p class="section-title">Overview</p>
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <p class="section-title" style="margin-top:8px">Top Maps by Play Count</p>
+    <div class="map-list">
+      <div class="map-list-header">Maps played this session</div>
+      <div id="mapList"></div>
+    </div>
+  </div>
+
+  <!-- ── BUG REPORTS ── -->
+  <div class="tab-panel" id="tab-bugs">
+    <p class="section-title">Bug Reports</p>
+    <div class="bug-list" id="bugList"></div>
+  </div>
+
+</main>
+
+<script>
+// ── Utilities ──────────────────────────────────────────
+function fmtTime(minutes) {
+  if (!minutes || minutes <= 0) return '—';
+  const h = Math.floor(minutes / 60);
+  const m = Math.round(minutes % 60);
+  if (h === 0) return `${m}m`;
+  return m === 0 ? `${h}h` : `${h}h ${m}m`;
+}
+
+function fmtDate(iso) {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  } catch { return iso; }
+}
+
+// ── Tab switching ──────────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ── Load data ──────────────────────────────────────────
+async function loadJSON(path) {
+  const res = await fetch(path);
+  if (!res.ok) throw new Error(`HTTP ${res.status} for ${path}`);
+  return res.json();
+}
+
+// ── Players tab ────────────────────────────────────────
+let allPlayers = [];
+let fuse = null;
+let sortCol = 'wins';
+let sortDir = 'desc';
+
+function buildPlayers(data) {
+  allPlayers = Object.entries(data.players).map(([username, p]) => ({
+    username,
+    wins:          p.wins          ?? 0,
+    matches_played:p.matches_played?? 0,
+    time_in_lobby: p.time_in_lobby ?? 0,
+    skips_voted:   p.skips_voted   ?? 0,
+    aborts_voted:  p.aborts_voted  ?? 0,
+  }));
+
+  fuse = new Fuse(allPlayers, {
+    keys: ['username'],
+    threshold: 0.4,
+    includeScore: true,
+  });
+
+  renderTable(allPlayers);
+  setupSort();
+  setupSearch();
+}
+
+function sortPlayers(list, col, dir) {
+  return [...list].sort((a, b) => {
+    let av = a[col], bv = b[col];
+    if (col === 'username') {
+      av = av.toLowerCase(); bv = bv.toLowerCase();
+      return dir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+    }
+    return dir === 'asc' ? av - bv : bv - av;
+  });
+}
+
+function renderTable(list) {
+  const sorted = sortPlayers(list, sortCol, sortDir);
+  const tbody = document.getElementById('playerTableBody');
+
+  if (sorted.length === 0) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="7">No players found</td></tr>';
+    return;
+  }
+
+  // Ranks are based on original win order, not search result position
+  const winRanks = Object.fromEntries(
+    sortPlayers(allPlayers, 'wins', 'desc').map((p, i) => [p.username, i + 1])
+  );
+
+  tbody.innerHTML = sorted.map(p => {
+    const rank = winRanks[p.username];
+    const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : 'rank-n';
+    const rankText  = rank <= 3 ? rank : rank;
+    return `<tr>
+      <td><span class="rank-badge ${rankClass}">${rankText}</span></td>
+      <td><span class="td-username">${escHtml(p.username)}</span></td>
+      <td class="td-wins">${p.wins}</td>
+      <td class="td-num">${p.matches_played}</td>
+      <td class="td-num">${fmtTime(p.time_in_lobby)}</td>
+      <td class="td-num">${p.skips_voted}</td>
+      <td class="td-num">${p.aborts_voted}</td>
+    </tr>`;
+  }).join('');
+}
+
+function setupSort() {
+  document.querySelectorAll('thead th[data-col]').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.col;
+      if (col === 'rank') return;
+      if (sortCol === col) {
+        sortDir = sortDir === 'desc' ? 'asc' : 'desc';
+      } else {
+        sortCol = col;
+        sortDir = col === 'username' ? 'asc' : 'desc';
+      }
+      document.querySelectorAll('thead th').forEach(t => t.classList.remove('sort-asc','sort-desc'));
+      th.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+
+      const query = document.getElementById('playerSearch').value.trim();
+      renderTable(query ? fuse.search(query).map(r => r.item) : allPlayers);
+    });
+  });
+
+  // Set initial sort indicator
+  document.querySelector(`thead th[data-col="wins"]`).classList.add('sort-desc');
+}
+
+function setupSearch() {
+  document.getElementById('playerSearch').addEventListener('input', e => {
+    const q = e.target.value.trim();
+    if (!q) { renderTable(allPlayers); return; }
+    const results = fuse.search(q);
+    // When searching, show relevance-ordered results; disable column sort indicator
+    document.querySelectorAll('thead th').forEach(t => t.classList.remove('sort-asc','sort-desc'));
+    sortCol = 'wins'; sortDir = 'desc';
+    renderTable(results.map(r => r.item));
+  });
+}
+
+// ── Room Stats tab ─────────────────────────────────────
+function buildRoom(data) {
+  const r = data.room;
+
+  // Stat cards
+  const totalPlayers = Object.keys(data.players).length;
+  const totalMatches = Object.values(data.players).reduce((s,p) => Math.max(s, p.matches_played), 0);
+  const totalWins    = Object.values(data.players).reduce((s,p) => s + (p.wins ?? 0), 0);
+
+  const cards = [
+    { label: 'Unique Players',  value: totalPlayers },
+    { label: 'Peak Players',    value: r.peak_players ?? '—' },
+    { label: 'Total Matches',   value: totalWins || totalMatches },
+    { label: 'Total Aborts',    value: r.total_aborts ?? 0 },
+    { label: 'Total Skips',     value: r.total_skips  ?? 0 },
+  ];
+
+  document.getElementById('statsGrid').innerHTML = cards.map(c => `
+    <div class="stat-card">
+      <div class="stat-label">${c.label}</div>
+      <div class="stat-value">${c.value}</div>
+    </div>`).join('');
+
+  // Top maps
+  const maps = Object.entries(r.maps ?? {})
+    .map(([id, m]) => ({ id, title: m.title, times_played: m.times_played }))
+    .sort((a, b) => b.times_played - a.times_played);
+
+  const maxPlays = maps[0]?.times_played || 1;
+
+  document.getElementById('mapList').innerHTML = maps.length
+    ? maps.map((m, i) => `
+      <div class="map-item">
+        <div class="map-rank">${i + 1}</div>
+        <div class="map-info">
+          <div class="map-title" title="${escHtml(m.title)}">${escHtml(m.title)}</div>
+          <div class="map-id">ID #${m.id}</div>
+        </div>
+        <div class="map-bar-wrap">
+          <div class="map-bar">
+            <div class="map-bar-fill" style="width:${Math.round(m.times_played/maxPlays*100)}%"></div>
+          </div>
+          <div class="map-count">${m.times_played}×</div>
+        </div>
+      </div>`).join('')
+    : '<div class="map-item" style="color:var(--text3);font-size:13px">No maps recorded yet</div>';
+}
+
+// ── Bug Reports tab ────────────────────────────────────
+function buildBugs(bugs) {
+  const el = document.getElementById('bugList');
+  if (!bugs || bugs.length === 0) {
+    el.innerHTML = '<div class="no-bugs">No bug reports found ✓</div>';
+    return;
+  }
+
+  // Sort: open first, then by date desc
+  const sorted = [...bugs].sort((a, b) => {
+    if (a.fixed !== b.fixed) return a.fixed ? 1 : -1;
+    return new Date(b.time) - new Date(a.time);
+  });
+
+  el.innerHTML = sorted.map(r => `
+    <div class="bug-card ${r.fixed ? 'fixed' : ''}">
+      <div class="bug-header">
+        <div class="bug-user">${escHtml(r.username)}</div>
+        <div class="bug-status ${r.fixed ? 'fixed' : 'open'}">
+          ${r.fixed ? '✓ Fixed' : '● Open'}
+        </div>
+        <div class="bug-time">${fmtDate(r.time)}</div>
+      </div>
+      <div class="bug-text">${escHtml(r.text)}</div>
+    </div>`).join('');
+}
+
+// ── XSS guard ─────────────────────────────────────────
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Bootstrap ─────────────────────────────────────────
+(async () => {
+  try {
+    const [stats, bugs] = await Promise.all([
+      loadJSON('stats.json'),
+      loadJSON('bugreports.json'),
+    ]);
+
+    // Header subtitle
+    const playerCount = Object.keys(stats.players).length;
+    document.getElementById('headerSub').textContent =
+      `${playerCount} player${playerCount !== 1 ? 's' : ''} tracked`;
+
+    buildPlayers(stats);
+    buildRoom(stats);
+    buildBugs(bugs);
+
+  } catch (err) {
+    console.error(err);
+    document.getElementById('headerSub').textContent = 'Error loading data';
+    document.getElementById('headerBadge').textContent = 'ERROR';
+    document.getElementById('headerBadge').style.cssText =
+      'background:rgba(248,113,113,.15);border-color:rgba(248,113,113,.3);color:#f87171';
+    document.getElementById('playerTableBody').innerHTML =
+      `<tr class="empty-row"><td colspan="7">
+        Could not load stats.json — serve this file via HTTP (e.g. <code>npx serve .</code>)
+      </td></tr>`;
+  }
+})();
+</script>
+</body>
+</html>
