@@ -543,18 +543,11 @@
 
     tbody tr.player-row { cursor: pointer; }
 
-    .player-charts-row {
-      display: grid;
-      grid-template-columns: 200px 1fr;
-      gap: 16px;
-      align-items: start;
-    }
-
     .chart-card {
       background: var(--bg2);
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 20px;
+      padding: 20px 24px;
     }
 
     .chart-title {
@@ -563,56 +556,62 @@
       letter-spacing: 0.8px;
       text-transform: uppercase;
       color: var(--text3);
-      margin-bottom: 16px;
+      margin-bottom: 20px;
+    }
+
+    .donut-flex {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .donut-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      flex-shrink: 0;
+    }
+
+    .donut-legend-item { display: flex; align-items: center; gap: 10px; }
+
+    .donut-legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .donut-legend-dot--wins  { background: var(--pink); }
+    .donut-legend-dot--losses { background: rgba(248,113,113,.5); }
+
+    .donut-legend-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text2);
+      min-width: 44px;
+    }
+
+    .donut-legend-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1;
     }
 
     .donut-wrap {
       display: flex;
       justify-content: center;
       align-items: center;
-    }
-
-    .mh-wrap { display: flex; flex-direction: column; gap: 18px; }
-
-    .mh-row { display: flex; align-items: center; gap: 12px; }
-
-    .mh-label {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text2);
-      width: 52px;
-      flex-shrink: 0;
-    }
-
-    .mh-bar-track {
       flex: 1;
-      height: 10px;
-      background: var(--bg4);
-      border-radius: 5px;
-      overflow: hidden;
     }
 
-    .mh-bar {
-      height: 100%;
-      border-radius: 5px;
-      transition: width .5s ease;
-      min-width: 3px;
+    @keyframes donut-fill {
+      from { stroke-dashoffset: var(--circ); }
+      to   { stroke-dashoffset: var(--target); }
     }
 
-    .mh-bar--wins  { background: var(--grad); }
-    .mh-bar--losses { background: rgba(248,113,113,.45); }
-
-    .mh-count {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text2);
-      min-width: 28px;
-      text-align: right;
-    }
-
-    .mh-total {
-      font-size: 11px;
-      color: var(--text3);
+    .donut-arc {
+      animation: donut-fill 0.9s ease forwards;
     }
 
     /* ── SCROLLBAR ── */
@@ -628,8 +627,7 @@
       main   { padding: 20px 12px; }
       .stats-grid { grid-template-columns: 1fr 1fr; }
       .map-bar-wrap { display: none; }
-      .player-charts-row { grid-template-columns: 1fr; }
-      .player-name { font-size: 24px; }
+.player-name { font-size: 24px; }
     }
   </style>
 </head>
@@ -937,8 +935,9 @@ function openPlayerPanel(username) {
   const winRateStr = p.matches_played > 0 ? winRate.toFixed(1) + '%' : '—';
   const losses = p.matches_played - p.wins;
 
-  const R = 54, C = +(2 * Math.PI * R).toFixed(2);
+  const R = 62, C = +(2 * Math.PI * R).toFixed(2);
   const dash = +(winRate / 100 * C).toFixed(2);
+  const offset = +(C - dash).toFixed(2);
 
   const cards = [
     { label: 'Wins',          value: p.wins },
@@ -953,6 +952,9 @@ function openPlayerPanel(username) {
   const wPct = p.matches_played > 0 ? (p.wins / p.matches_played * 100).toFixed(1) : 0;
   const lPct = p.matches_played > 0 ? (losses / p.matches_played * 100).toFixed(1) : 0;
 
+  const S = R * 2 + 28; // SVG size: diameter + stroke*2
+  const cx = S / 2, cy = S / 2;
+
   document.getElementById('tab-player').innerHTML = `
     <button class="player-back-btn" onclick="closePlayerPanel()">← Back</button>
     <div class="player-header">
@@ -965,50 +967,43 @@ function openPlayerPanel(username) {
           <div class="stat-value">${c.value}</div>
         </div>`).join('')}
     </div>
-    <div class="player-charts-row">
-      <div class="chart-card">
-        <div class="chart-title">Win Rate</div>
+    <div class="chart-card">
+      <div class="chart-title">Win Rate</div>
+      <div class="donut-flex">
+        <div class="donut-legend">
+          <div class="donut-legend-item">
+            <div class="donut-legend-dot donut-legend-dot--wins"></div>
+            <div class="donut-legend-label">Wins</div>
+            <div class="donut-legend-value">${p.wins}</div>
+          </div>
+          <div class="donut-legend-item">
+            <div class="donut-legend-dot donut-legend-dot--losses"></div>
+            <div class="donut-legend-label">Losses</div>
+            <div class="donut-legend-value">${losses}</div>
+          </div>
+        </div>
         <div class="donut-wrap">
-          <svg width="160" height="160" viewBox="0 0 160 160">
+          <svg width="${S}" height="${S}" viewBox="0 0 ${S} ${S}">
             <defs>
               <linearGradient id="dg" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stop-color="#ff66ab"/>
                 <stop offset="100%" stop-color="#b06ef0"/>
               </linearGradient>
             </defs>
-            <circle cx="80" cy="80" r="${R}" fill="none" stroke="#342f50" stroke-width="14"/>
-            <circle cx="80" cy="80" r="${R}" fill="none"
-              stroke="url(#dg)" stroke-width="14"
-              stroke-dasharray="${dash} ${C}"
+            <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#342f50" stroke-width="13"/>
+            <circle class="donut-arc" cx="${cx}" cy="${cy}" r="${R}" fill="none"
+              stroke="url(#dg)" stroke-width="13"
+              stroke-dasharray="${C}" stroke-dashoffset="${C}"
               stroke-linecap="round"
-              transform="rotate(-90 80 80)"/>
-            <text x="80" y="75" text-anchor="middle"
-              font-family="Inter,sans-serif" font-size="26" font-weight="700"
+              style="--circ:${C};--target:${offset};transform-origin:${cx}px ${cy}px;transform:rotate(-90deg)"
+            />
+            <text x="${cx}" y="${cy - 8}" text-anchor="middle"
+              font-family="Inter,sans-serif" font-size="22" font-weight="700"
               fill="url(#dg)">${winRate.toFixed(1)}%</text>
-            <text x="80" y="95" text-anchor="middle"
+            <text x="${cx}" y="${cy + 12}" text-anchor="middle"
               font-family="Inter,sans-serif" font-size="11" font-weight="600"
               letter-spacing="1" fill="#625e7a">WIN RATE</text>
           </svg>
-        </div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-title">Match History</div>
-        <div class="mh-wrap">
-          <div class="mh-row">
-            <div class="mh-label">Wins</div>
-            <div class="mh-bar-track">
-              <div class="mh-bar mh-bar--wins" style="width:${wPct}%"></div>
-            </div>
-            <div class="mh-count">${p.wins}</div>
-          </div>
-          <div class="mh-row">
-            <div class="mh-label">Losses</div>
-            <div class="mh-bar-track">
-              <div class="mh-bar mh-bar--losses" style="width:${lPct}%"></div>
-            </div>
-            <div class="mh-count">${losses}</div>
-          </div>
-          <div class="mh-total">out of ${p.matches_played} matches total</div>
         </div>
       </div>
     </div>`;
