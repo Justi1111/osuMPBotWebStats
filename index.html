@@ -69,6 +69,13 @@
       flex-shrink: 0;
       box-shadow: 0 0 20px rgba(255, 102, 171, 0.4);
       user-select: none;
+      text-decoration: none;
+      transition: box-shadow .2s, transform .15s;
+    }
+
+    .logo:hover {
+      box-shadow: 0 0 30px rgba(255, 102, 171, 0.65);
+      transform: scale(1.07);
     }
 
     .header-title {
@@ -491,6 +498,127 @@
       font-size: 14px;
     }
 
+    /* ── PLAYER PANEL ── */
+    .player-back-btn {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text2);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-bottom: 24px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: color .2s, border-color .2s;
+    }
+
+    .player-back-btn:hover {
+      color: var(--pink);
+      border-color: rgba(255,102,171,.4);
+    }
+
+    .player-header { margin-bottom: 28px; }
+
+    .player-name {
+      font-size: 32px;
+      font-weight: 800;
+      background: var(--grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+
+    .player-osu-link {
+      font-size: 13px;
+      color: var(--text3);
+      text-decoration: none;
+      transition: color .2s;
+    }
+
+    .player-osu-link:hover { color: var(--pink); }
+
+    .player-stats-grid { margin-bottom: 28px; }
+
+    tbody tr.player-row { cursor: pointer; }
+
+    .player-charts-row {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .chart-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+    }
+
+    .chart-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--text3);
+      margin-bottom: 16px;
+    }
+
+    .donut-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .mh-wrap { display: flex; flex-direction: column; gap: 18px; }
+
+    .mh-row { display: flex; align-items: center; gap: 12px; }
+
+    .mh-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text2);
+      width: 52px;
+      flex-shrink: 0;
+    }
+
+    .mh-bar-track {
+      flex: 1;
+      height: 10px;
+      background: var(--bg4);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    .mh-bar {
+      height: 100%;
+      border-radius: 5px;
+      transition: width .5s ease;
+      min-width: 3px;
+    }
+
+    .mh-bar--wins  { background: var(--grad); }
+    .mh-bar--losses { background: rgba(248,113,113,.45); }
+
+    .mh-count {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text2);
+      min-width: 28px;
+      text-align: right;
+    }
+
+    .mh-total {
+      font-size: 11px;
+      color: var(--text3);
+    }
+
     /* ── SCROLLBAR ── */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -504,13 +632,15 @@
       main   { padding: 20px 12px; }
       .stats-grid { grid-template-columns: 1fr 1fr; }
       .map-bar-wrap { display: none; }
+      .player-charts-row { grid-template-columns: 1fr; }
+      .player-name { font-size: 24px; }
     }
   </style>
 </head>
 <body>
 
 <header>
-  <div class="logo">osu!</div>
+  <a href="https://osu.ppy.sh" target="_blank" rel="noopener" class="logo">osu!</a>
   <div class="header-title">
     <h1>MP Lobby Stats</h1>
     <span id="headerSub">Loading…</span>
@@ -570,6 +700,9 @@
     <div class="bug-list" id="bugList"></div>
   </div>
 
+  <!-- ── PLAYER DETAIL ── -->
+  <div class="tab-panel" id="tab-player"></div>
+
 </main>
 
 <script>
@@ -604,16 +737,19 @@ let allPlayers = [];
 let fuse = null;
 let sortCol = 'wins';
 let sortDir = 'desc';
+let listenersAttached = false;
 
 function buildPlayers(data) {
-  allPlayers = Object.entries(data.players).map(([username, p]) => ({
-    username,
-    wins:          p.wins          ?? 0,
-    matches_played:p.matches_played?? 0,
-    time_in_lobby: p.time_in_lobby ?? 0,
-    skips_voted:   p.skips_voted   ?? 0,
-    aborts_voted:  p.aborts_voted  ?? 0,
-  }));
+  allPlayers = Object.entries(data.players ?? {})
+    .map(([username, p]) => ({
+      username,
+      wins:          p.wins          ?? 0,
+      matches_played:p.matches_played?? 0,
+      time_in_lobby: p.time_in_lobby ?? 0,
+      skips_voted:   p.skips_voted   ?? 0,
+      aborts_voted:  p.aborts_voted  ?? 0,
+    }))
+    .filter(p => p.matches_played > 0);
 
   fuse = new Fuse(allPlayers, {
     keys: ['username'],
@@ -622,8 +758,13 @@ function buildPlayers(data) {
   });
 
   renderTable(allPlayers);
-  setupSort();
-  setupSearch();
+
+  if (!listenersAttached) {
+    setupSort();
+    setupSearch();
+    setupRowClick();
+    listenersAttached = true;
+  }
 }
 
 function sortPlayers(list, col, dir) {
@@ -654,9 +795,8 @@ function renderTable(list) {
   tbody.innerHTML = sorted.map(p => {
     const rank = winRanks[p.username];
     const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : 'rank-n';
-    const rankText  = rank <= 3 ? rank : rank;
-    return `<tr>
-      <td><span class="rank-badge ${rankClass}">${rankText}</span></td>
+    return `<tr class="player-row" data-username="${escHtml(p.username)}">
+      <td><span class="rank-badge ${rankClass}">${rank}</span></td>
       <td><span class="td-username">${escHtml(p.username)}</span></td>
       <td class="td-wins">${p.wins}</td>
       <td class="td-num">${p.matches_played}</td>
@@ -699,6 +839,13 @@ function setupSearch() {
     document.querySelectorAll('thead th').forEach(t => t.classList.remove('sort-asc','sort-desc'));
     sortCol = 'wins'; sortDir = 'desc';
     renderTable(results.map(r => r.item));
+  });
+}
+
+function setupRowClick() {
+  document.getElementById('playerTableBody').addEventListener('click', e => {
+    const row = e.target.closest('tr.player-row');
+    if (row) openPlayerPanel(row.dataset.username);
   });
 }
 
@@ -781,6 +928,108 @@ function escHtml(str) {
   return String(str)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;')
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Player detail panel ───────────────────────────────
+function openPlayerPanel(username) {
+  const p = allPlayers.find(x => x.username === username);
+  if (!p) return;
+
+  const lobbyRank = sortPlayers(allPlayers, 'wins', 'desc')
+    .findIndex(x => x.username === username) + 1;
+  const winRate = p.matches_played > 0 ? p.wins / p.matches_played * 100 : 0;
+  const winRateStr = p.matches_played > 0 ? winRate.toFixed(1) + '%' : '—';
+  const losses = p.matches_played - p.wins;
+
+  const R = 54, C = +(2 * Math.PI * R).toFixed(2);
+  const dash = +(winRate / 100 * C).toFixed(2);
+
+  const cards = [
+    { label: 'Wins',          value: p.wins },
+    { label: 'Matches Played',value: p.matches_played },
+    { label: 'Win Rate',      value: winRateStr },
+    { label: 'Time in Lobby', value: fmtTime(p.time_in_lobby) },
+    { label: 'Lobby Rank',    value: '#' + lobbyRank },
+    { label: 'Skips Voted',   value: p.skips_voted },
+    { label: 'Aborts Voted',  value: p.aborts_voted },
+  ];
+
+  const wPct = p.matches_played > 0 ? (p.wins / p.matches_played * 100).toFixed(1) : 0;
+  const lPct = p.matches_played > 0 ? (losses / p.matches_played * 100).toFixed(1) : 0;
+
+  document.getElementById('tab-player').innerHTML = `
+    <button class="player-back-btn" onclick="closePlayerPanel()">← Back</button>
+    <div class="player-header">
+      <div class="player-name">${escHtml(p.username)}</div>
+      <a class="player-osu-link" href="https://osu.ppy.sh/users/${encodeURIComponent(p.username)}" target="_blank" rel="noopener">View on osu! ↗</a>
+    </div>
+    <div class="stats-grid player-stats-grid">
+      ${cards.map(c => `
+        <div class="stat-card">
+          <div class="stat-label">${c.label}</div>
+          <div class="stat-value">${c.value}</div>
+        </div>`).join('')}
+    </div>
+    <div class="player-charts-row">
+      <div class="chart-card">
+        <div class="chart-title">Win Rate</div>
+        <div class="donut-wrap">
+          <svg width="160" height="160" viewBox="0 0 160 160">
+            <defs>
+              <linearGradient id="dg" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#ff66ab"/>
+                <stop offset="100%" stop-color="#b06ef0"/>
+              </linearGradient>
+            </defs>
+            <circle cx="80" cy="80" r="${R}" fill="none" stroke="#342f50" stroke-width="14"/>
+            <circle cx="80" cy="80" r="${R}" fill="none"
+              stroke="url(#dg)" stroke-width="14"
+              stroke-dasharray="${dash} ${C}"
+              stroke-linecap="round"
+              transform="rotate(-90 80 80)"/>
+            <text x="80" y="75" text-anchor="middle"
+              font-family="Inter,sans-serif" font-size="26" font-weight="700"
+              fill="url(#dg)">${winRate.toFixed(1)}%</text>
+            <text x="80" y="95" text-anchor="middle"
+              font-family="Inter,sans-serif" font-size="11" font-weight="600"
+              letter-spacing="1" fill="#625e7a">WIN RATE</text>
+          </svg>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Match History</div>
+        <div class="mh-wrap">
+          <div class="mh-row">
+            <div class="mh-label">Wins</div>
+            <div class="mh-bar-track">
+              <div class="mh-bar mh-bar--wins" style="width:${wPct}%"></div>
+            </div>
+            <div class="mh-count">${p.wins}</div>
+          </div>
+          <div class="mh-row">
+            <div class="mh-label">Losses</div>
+            <div class="mh-bar-track">
+              <div class="mh-bar mh-bar--losses" style="width:${lPct}%"></div>
+            </div>
+            <div class="mh-count">${losses}</div>
+          </div>
+          <div class="mh-total">out of ${p.matches_played} matches total</div>
+        </div>
+      </div>
+    </div>`;
+
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+  document.getElementById('tab-player').classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function closePlayerPanel() {
+  document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+  document.getElementById('tab-players').classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === 'players');
+  });
 }
 
 // ── Firebase bootstrap ────────────────────────────────
