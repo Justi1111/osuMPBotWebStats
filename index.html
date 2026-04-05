@@ -872,8 +872,8 @@ function buildRoom(data) {
           <div class="map-bar">
             <div class="map-bar-fill" style="width:${Math.round(m.times_played/maxPlays*100)}%"></div>
           </div>
-          <div class="map-count">${m.times_played}×</div>
         </div>
+        <div class="map-count">${m.times_played}×</div>
       </div>`).join('')
     : '<div class="map-item" style="color:var(--text3);font-size:13px">No maps recorded yet</div>';
 }
