@@ -667,8 +667,6 @@
             <th data-col="wins">Wins</th>
             <th data-col="matches_played">Matches</th>
             <th data-col="time_in_lobby">Time in Lobby</th>
-            <th data-col="skips_voted">Skips</th>
-            <th data-col="aborts_voted">Aborts</th>
           </tr>
         </thead>
         <tbody id="playerTableBody"></tbody>
@@ -777,7 +775,7 @@ function renderTable(list) {
   const tbody = document.getElementById('playerTableBody');
 
   if (sorted.length === 0) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="7">No players found</td></tr>';
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="5">No players found</td></tr>';
     return;
   }
 
@@ -795,8 +793,6 @@ function renderTable(list) {
       <td class="td-wins">${p.wins}</td>
       <td class="td-num">${p.matches_played}</td>
       <td class="td-num">${fmtTime(p.time_in_lobby)}</td>
-      <td class="td-num">${p.skips_voted}</td>
-      <td class="td-num">${p.aborts_voted}</td>
     </tr>`;
   }).join('');
 }
@@ -945,8 +941,6 @@ function openPlayerPanel(username) {
     { label: 'Win Rate',      value: winRateStr },
     { label: 'Time in Lobby', value: fmtTime(p.time_in_lobby) },
     { label: 'Lobby Rank',    value: '#' + lobbyRank },
-    { label: 'Skips Voted',   value: p.skips_voted },
-    { label: 'Aborts Voted',  value: p.aborts_voted },
   ];
 
   const wPct = p.matches_played > 0 ? (p.wins / p.matches_played * 100).toFixed(1) : 0;
