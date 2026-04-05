@@ -532,16 +532,12 @@
       background-clip: text;
       line-height: 1.2;
       margin-bottom: 8px;
-    }
-
-    .player-osu-link {
-      font-size: 13px;
-      color: var(--text3);
       text-decoration: none;
-      transition: color .2s;
+      display: inline-block;
+      transition: opacity .2s;
     }
 
-    .player-osu-link:hover { color: var(--pink); }
+    .player-name:hover { opacity: .75; }
 
     .player-stats-grid { margin-bottom: 28px; }
 
@@ -960,8 +956,7 @@ function openPlayerPanel(username) {
   document.getElementById('tab-player').innerHTML = `
     <button class="player-back-btn" onclick="closePlayerPanel()">← Back</button>
     <div class="player-header">
-      <div class="player-name">${escHtml(p.username)}</div>
-      <a class="player-osu-link" href="https://osu.ppy.sh/users/${encodeURIComponent(p.username)}" target="_blank" rel="noopener">View on osu! ↗</a>
+      <a class="player-name" href="https://osu.ppy.sh/users/${encodeURIComponent(p.username)}" target="_blank" rel="noopener">${escHtml(p.username)}</a>
     </div>
     <div class="stats-grid player-stats-grid">
       ${cards.map(c => `
