@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>osu! MP Lobby Stats</title>
   <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -595,13 +597,6 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-// ── Load data ──────────────────────────────────────────
-async function loadJSON(path) {
-  const res = await fetch(path);
-  if (!res.ok) throw new Error(`HTTP ${res.status} for ${path}`);
-  return res.json();
-}
-
 // ── Players tab ────────────────────────────────────────
 let allPlayers = [];
 let fuse = null;
@@ -707,17 +702,15 @@ function setupSearch() {
 
 // ── Room Stats tab ─────────────────────────────────────
 function buildRoom(data) {
-  const r = data.room;
+  const r = data.room_stats ?? {};
 
   // Stat cards
-  const totalPlayers = Object.keys(data.players).length;
-  const totalMatches = Object.values(data.players).reduce((s,p) => Math.max(s, p.matches_played), 0);
-  const totalWins    = Object.values(data.players).reduce((s,p) => s + (p.wins ?? 0), 0);
+  const totalPlayers = Object.keys(data.players ?? {}).length;
 
   const cards = [
     { label: 'Unique Players',  value: totalPlayers },
     { label: 'Peak Players',    value: r.peak_players ?? '—' },
-    { label: 'Total Matches',   value: totalWins || totalMatches },
+    { label: 'Total Matches',   value: r.total_matches ?? '—' },
     { label: 'Total Aborts',    value: r.total_aborts ?? 0 },
     { label: 'Total Skips',     value: r.total_skips  ?? 0 },
   ];
@@ -729,7 +722,7 @@ function buildRoom(data) {
     </div>`).join('');
 
   // Top maps
-  const maps = Object.entries(r.maps ?? {})
+  const maps = Object.entries(data.maps ?? {})
     .map(([id, m]) => ({ id, title: m.title, times_played: m.times_played }))
     .sort((a, b) => b.times_played - a.times_played);
 
@@ -754,9 +747,10 @@ function buildRoom(data) {
 }
 
 // ── Bug Reports tab ────────────────────────────────────
-function buildBugs(bugs) {
+function buildBugs(bugsObj) {
   const el = document.getElementById('bugList');
-  if (!bugs || bugs.length === 0) {
+  const bugs = Object.values(bugsObj ?? {});
+  if (bugs.length === 0) {
     el.innerHTML = '<div class="no-bugs">No bug reports found ✓</div>';
     return;
   }
@@ -764,7 +758,7 @@ function buildBugs(bugs) {
   // Sort: open first, then by date desc
   const sorted = [...bugs].sort((a, b) => {
     if (a.fixed !== b.fixed) return a.fixed ? 1 : -1;
-    return new Date(b.time) - new Date(a.time);
+    return new Date(b.created_at) - new Date(a.created_at);
   });
 
   el.innerHTML = sorted.map(r => `
@@ -774,7 +768,7 @@ function buildBugs(bugs) {
         <div class="bug-status ${r.fixed ? 'fixed' : 'open'}">
           ${r.fixed ? '✓ Fixed' : '● Open'}
         </div>
-        <div class="bug-time">${fmtDate(r.time)}</div>
+        <div class="bug-time">${fmtDate(r.created_at)}</div>
       </div>
       <div class="bug-text">${escHtml(r.text)}</div>
     </div>`).join('');
@@ -787,35 +781,30 @@ function escHtml(str) {
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ── Bootstrap ─────────────────────────────────────────
-(async () => {
-  try {
-    const [stats, bugs] = await Promise.all([
-      loadJSON('stats.json'),
-      loadJSON('bugreports.json'),
-    ]);
+// ── Firebase bootstrap ────────────────────────────────
+const app = firebase.initializeApp({
+  databaseURL: 'https://osumpbotj-default-rtdb.europe-west1.firebasedatabase.app/',
+});
 
-    // Header subtitle
-    const playerCount = Object.keys(stats.players).length;
-    document.getElementById('headerSub').textContent =
-      `${playerCount} player${playerCount !== 1 ? 's' : ''} tracked`;
+firebase.database().ref('/').on('value', snapshot => {
+  const data = snapshot.val() ?? {};
 
-    buildPlayers(stats);
-    buildRoom(stats);
-    buildBugs(bugs);
+  const playerCount = Object.keys(data.players ?? {}).length;
+  document.getElementById('headerSub').textContent =
+    `${playerCount} player${playerCount !== 1 ? 's' : ''} tracked`;
 
-  } catch (err) {
-    console.error(err);
-    document.getElementById('headerSub').textContent = 'Error loading data';
-    document.getElementById('headerBadge').textContent = 'ERROR';
-    document.getElementById('headerBadge').style.cssText =
-      'background:rgba(248,113,113,.15);border-color:rgba(248,113,113,.3);color:#f87171';
-    document.getElementById('playerTableBody').innerHTML =
-      `<tr class="empty-row"><td colspan="7">
-        Could not load stats.json — serve this file via HTTP (e.g. <code>npx serve .</code>)
-      </td></tr>`;
-  }
-})();
+  buildPlayers(data);
+  buildRoom(data);
+  buildBugs(data.bug_reports);
+}, err => {
+  console.error(err);
+  document.getElementById('headerSub').textContent = 'Error loading data';
+  document.getElementById('headerBadge').textContent = 'ERROR';
+  document.getElementById('headerBadge').style.cssText =
+    'background:rgba(248,113,113,.15);border-color:rgba(248,113,113,.3);color:#f87171';
+  document.getElementById('playerTableBody').innerHTML =
+    '<tr class="empty-row"><td colspan="7">Could not connect to Firebase</td></tr>';
+});
 </script>
 </body>
 </html>
