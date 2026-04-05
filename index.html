@@ -582,7 +582,7 @@
     }
 
     .donut-legend-dot--wins  { background: var(--pink); }
-    .donut-legend-dot--losses { background: rgba(248,113,113,.5); }
+    .donut-legend-dot--losses { background: #342f50; border: 1px solid var(--border); }
 
     .donut-legend-label {
       font-size: 12px;
@@ -605,14 +605,7 @@
       flex: 1;
     }
 
-    @keyframes donut-fill {
-      from { stroke-dashoffset: var(--circ); }
-      to   { stroke-dashoffset: var(--target); }
-    }
-
-    .donut-arc {
-      animation: donut-fill 0.9s ease forwards;
-    }
+    .donut-arc { transition: stroke-dashoffset 0.9s ease; }
 
     /* ── SCROLLBAR ── */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -989,7 +982,7 @@ function openPlayerPanel(username) {
               stroke="url(#dg)" stroke-width="13"
               stroke-dasharray="${C}" stroke-dashoffset="${C}"
               stroke-linecap="round"
-              style="--circ:${C};--target:${offset};transform-origin:${cx}px ${cy}px;transform:rotate(-90deg)"
+              style="transform-origin:${cx}px ${cy}px;transform:rotate(-90deg)"
             />
             <text x="${cx}" y="${cy - 8}" text-anchor="middle"
               font-family="Inter,sans-serif" font-size="22" font-weight="700"
@@ -1006,6 +999,16 @@ function openPlayerPanel(username) {
   document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
   document.getElementById('tab-player').classList.add('active');
   window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  const arc = document.querySelector('.donut-arc');
+  if (arc) {
+    new IntersectionObserver(([entry], obs) => {
+      if (entry.isIntersecting) {
+        arc.style.strokeDashoffset = offset;
+        obs.disconnect();
+      }
+    }, { threshold: 0.5 }).observe(arc);
+  }
 }
 
 function closePlayerPanel() {
