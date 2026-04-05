@@ -356,6 +356,8 @@
       padding: 14px 20px;
       border-top: 1px solid rgba(255,255,255,.04);
       transition: background .15s;
+      text-decoration: none;
+      color: inherit;
     }
 
     .map-item:hover { background: rgba(255,255,255,.03); }
@@ -862,19 +864,14 @@ function buildRoom(data) {
 
   document.getElementById('mapList').innerHTML = maps.length
     ? maps.map((m, i) => `
-      <div class="map-item">
+      <a class="map-item" href="https://osu.ppy.sh/b/${encodeURIComponent(m.id)}" target="_blank" rel="noopener">
         <div class="map-rank">${i + 1}</div>
         <div class="map-info">
           <div class="map-title" title="${escHtml(m.title)}">${escHtml(m.title)}</div>
           <div class="map-id">ID #${m.id}</div>
         </div>
-        <div class="map-bar-wrap">
-          <div class="map-bar">
-            <div class="map-bar-fill" style="width:${Math.round(m.times_played/maxPlays*100)}%"></div>
-          </div>
-        </div>
         <div class="map-count">${m.times_played}×</div>
-      </div>`).join('')
+      </a>`).join('')
     : '<div class="map-item" style="color:var(--text3);font-size:13px">No maps recorded yet</div>';
 }
 
