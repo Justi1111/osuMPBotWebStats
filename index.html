@@ -853,6 +853,7 @@ function buildPlayers(data) {
       time_in_lobby: p.time_in_lobby ?? 0,
       skips_voted:   p.skips_voted   ?? 0,
       aborts_voted:  p.aborts_voted  ?? 0,
+      win_streak:    p.win_streak    ?? 0,
     }))
     .filter(p => p.matches_played > 0);
 
@@ -970,9 +971,8 @@ function buildRoom(data) {
 
   const cards = [
     { label: 'Unique Players',  value: totalPlayers },
-    { label: 'Peak Players',    value: r.peak_players ?? '—' },
+    { label: 'Peak Players Today', value: r.peak_players_today ?? '—' },
     { label: 'Total Matches',   value: r.total_matches ?? '—' },
-    { label: 'Total Aborts',    value: r.total_aborts ?? 0 },
     { label: 'Total Skips',     value: r.total_skips  ?? 0 },
   ];
 
@@ -1058,6 +1058,7 @@ function openPlayerPanel(username) {
     { label: 'Win Rate',      value: winRateStr },
     { label: 'Time in Lobby', value: fmtTime(p.time_in_lobby) },
     { label: 'Lobby Rank',    value: '#' + lobbyRank },
+    { label: 'Win Streak',    value: p.win_streak > 0 ? `🔥 ${p.win_streak}` : '0' },
   ];
 
   const wPct = p.matches_played > 0 ? (p.wins / p.matches_played * 100).toFixed(1) : 0;
@@ -1146,6 +1147,25 @@ function closePlayerPanel() {
 // ── Firebase bootstrap ────────────────────────────────
 const app = firebase.initializeApp({
   databaseURL: 'https://osumpbotj-default-rtdb.europe-west1.firebasedatabase.app/',
+});
+
+function updateBadge(online, lastSeen) {
+  const badge = document.getElementById('headerBadge');
+  let ts = typeof lastSeen === 'number' ? lastSeen : Date.parse(lastSeen);
+  if (ts < 1e12) ts *= 1000; // seconds → milliseconds
+  const fresh = !isNaN(ts) && (Date.now() - ts) < 60_000;
+  const live = online === true && fresh;
+  badge.textContent = live ? '🔴 LIVE' : '⚫ OFFLINE';
+  if (live) {
+    badge.style.cssText = '';
+  } else {
+    badge.style.cssText = 'background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1);color:#6a6a8a';
+  }
+}
+
+firebase.database().ref('/status').on('value', snap => {
+  const s = snap.val() ?? {};
+  updateBadge(s.online, s.last_seen);
 });
 
 firebase.database().ref('/').on('value', snapshot => {
