@@ -883,6 +883,15 @@ function sortPlayers(list, col, dir) {
   });
 }
 
+// Sort by wins desc, then matches_played desc, then time_in_lobby desc
+function rankSort(list) {
+  return [...list].sort((a, b) =>
+    b.wins - a.wins ||
+    b.matches_played - a.matches_played ||
+    b.time_in_lobby - a.time_in_lobby
+  );
+}
+
 function renderTable(list) {
   const sorted = sortPlayers(list, sortCol, sortDir);
   const tbody = document.getElementById('playerTableBody');
@@ -894,7 +903,7 @@ function renderTable(list) {
 
   // Ranks are based on original win order, not search result position
   const winRanks = Object.fromEntries(
-    sortPlayers(allPlayers, 'wins', 'desc').map((p, i) => [p.username, i + 1])
+    rankSort(allPlayers).map((p, i) => [p.username, i + 1])
   );
 
   tbody.innerHTML = sorted.map(p => {
@@ -1033,7 +1042,7 @@ function openPlayerPanel(username) {
   const p = allPlayers.find(x => x.username === username);
   if (!p) return;
 
-  const lobbyRank = sortPlayers(allPlayers, 'wins', 'desc')
+  const lobbyRank = rankSort(allPlayers)
     .findIndex(x => x.username === username) + 1;
   const winRate = p.matches_played > 0 ? p.wins / p.matches_played * 100 : 0;
   const winRateStr = p.matches_played > 0 ? winRate.toFixed(1) + '%' : '—';
