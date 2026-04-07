@@ -692,6 +692,168 @@
       .cmd-name { min-width: unset; }
     }
 
+    /* ── TOP PLAYS ── */
+    .top-plays-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 28px;
+    }
+
+    .top-plays-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--text3);
+      margin-bottom: 14px;
+    }
+
+    .play-card {
+      position: relative;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color .2s, transform .15s;
+      min-height: 90px;
+    }
+
+    .play-card:hover {
+      border-color: rgba(255,102,171,.4);
+      transform: translateY(-1px);
+    }
+
+    .play-card-bg {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      filter: blur(4px) brightness(0.35);
+      transform: scale(1.06);
+      z-index: 0;
+    }
+
+    .play-card-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to right, rgba(26,23,32,.96) 0%, rgba(26,23,32,.78) 55%, rgba(26,23,32,.45) 100%);
+      z-index: 1;
+    }
+
+    .play-card-inner {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      padding: 14px 18px 10px;
+      gap: 8px;
+      height: 100%;
+    }
+
+    .play-card-main {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .play-info { flex: 1; min-width: 0; }
+
+    .play-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 3px;
+    }
+
+    .play-diff {
+      font-size: 12px;
+      color: var(--text2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 6px;
+    }
+
+    .play-mods { display: flex; gap: 4px; flex-wrap: wrap; }
+
+    .mod-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(176,110,240,.18);
+      border: 1px solid rgba(176,110,240,.35);
+      color: var(--purple);
+      letter-spacing: 0.4px;
+    }
+
+    .play-stats {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    .play-rank-grade {
+      font-size: 26px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .play-pp {
+      font-size: 24px;
+      font-weight: 800;
+      background: var(--grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+    }
+
+    .play-pp sup {
+      font-size: 12px;
+      font-weight: 700;
+      -webkit-text-fill-color: var(--text3);
+    }
+
+    .play-sub {
+      font-size: 12px;
+      color: var(--text2);
+      font-weight: 500;
+    }
+
+    .play-card-footer {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .play-date { font-size: 11px; color: var(--text3); }
+
+    .no-plays {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text3);
+      font-size: 13px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+
+    .rank-X, .rank-XH { color: #ffd700; }
+    .rank-S, .rank-SH  { color: #d4af37; }
+    .rank-A            { color: #4ade80; }
+    .rank-B            { color: #60a5fa; }
+    .rank-C            { color: #c084fc; }
+    .rank-D            { color: #f87171; }
+
     /* ── SCROLLBAR ── */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -854,6 +1016,7 @@ function buildPlayers(data) {
       skips_voted:   p.skips_voted   ?? 0,
       aborts_voted:  p.aborts_voted  ?? 0,
       win_streak:    p.win_streak    ?? 0,
+      top_plays:     p.top_plays     ?? null,
     }))
     .filter(p => p.matches_played > 0);
 
@@ -1118,6 +1281,10 @@ function openPlayerPanel(username) {
           </svg>
         </div>
       </div>
+    </div>
+    <div class="top-plays-list">
+      <div class="top-plays-title">Top Plays</div>
+      ${buildTopPlays(p.top_plays)}
     </div>`;
 
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1134,6 +1301,56 @@ function openPlayerPanel(username) {
       }
     }, { threshold: 0.5 }).observe(arc);
   }
+}
+
+function buildTopPlays(rawPlays) {
+  if (!rawPlays) return '<div class="no-plays">No plays recorded yet</div>';
+  const plays = (Array.isArray(rawPlays) ? rawPlays : Object.values(rawPlays))
+    .filter(Boolean)
+    .sort((a, b) => (b.pp ?? 0) - (a.pp ?? 0));
+  if (!plays.length) return '<div class="no-plays">No plays recorded yet</div>';
+
+  return plays.map(play => {
+    const bgUrl = `https://assets.ppy.sh/beatmaps/${play.beatmapset_id}/covers/cover.jpg`;
+    const mods = Array.isArray(play.mods) ? play.mods
+                : (play.mods && typeof play.mods === 'object') ? Object.values(play.mods)
+                : [];
+    const acc  = play.accuracy != null
+      ? (play.accuracy > 1 ? +play.accuracy : play.accuracy * 100).toFixed(2) + '%'
+      : '—';
+    const combo  = play.combo ?? play.max_combo ?? '—';
+    const pp     = play.pp != null ? Math.round(play.pp) : '—';
+    const rank   = (play.rank ?? '?').replace('+', 'plus');
+    const title  = escHtml(play.title ?? 'Unknown');
+    const diff   = escHtml(play.version ?? play.difficulty ?? '');
+    const mapper = escHtml(play.mapper ?? play.creator ?? '');
+    const date   = play.date ?? play.created_at ?? '';
+    const href   = play.beatmap_id
+      ? `https://osu.ppy.sh/b/${play.beatmap_id}`
+      : `https://osu.ppy.sh/beatmapsets/${play.beatmapset_id}`;
+
+    return `
+      <a class="play-card" href="${href}" target="_blank" rel="noopener">
+        <div class="play-card-bg" style="background-image:url('${bgUrl}')"></div>
+        <div class="play-card-overlay"></div>
+        <div class="play-card-inner">
+          <div class="play-card-main">
+            <div class="play-info">
+              <div class="play-title">${title}</div>
+              <div class="play-diff">[${diff}]${mapper ? ` · mapped by ${mapper}` : ''}</div>
+              ${mods.length ? `<div class="play-mods">${mods.map(m => `<span class="mod-badge">${escHtml(String(m))}</span>`).join('')}</div>` : ''}
+            </div>
+            <div class="play-stats">
+              <div class="play-rank-grade rank-${rank}">${play.rank ?? '?'}</div>
+              <div class="play-pp">${pp}<sup>pp</sup></div>
+              <div class="play-sub">${acc}</div>
+              <div class="play-sub">${combo}x</div>
+            </div>
+          </div>
+          ${date ? `<div class="play-card-footer"><span class="play-date">${fmtDate(date)}</span></div>` : ''}
+        </div>
+      </a>`;
+  }).join('');
 }
 
 function closePlayerPanel() {
