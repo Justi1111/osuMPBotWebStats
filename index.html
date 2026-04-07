@@ -1311,23 +1311,21 @@ function buildTopPlays(rawPlays) {
   if (!plays.length) return '<div class="no-plays">No plays recorded yet</div>';
 
   return plays.map(play => {
-    const bgUrl = `https://assets.ppy.sh/beatmaps/${play.beatmapset_id}/covers/cover.jpg`;
+    const bgUrl = `https://assets.ppy.sh/beatmaps/${play.beatmap_id}/covers/cover.jpg`;
     const mods = Array.isArray(play.mods) ? play.mods
                 : (play.mods && typeof play.mods === 'object') ? Object.values(play.mods)
                 : [];
-    const acc  = play.accuracy != null
+    const modsStr = mods.map(m => String(m)).join('');
+    const acc   = play.accuracy != null
       ? (play.accuracy > 1 ? +play.accuracy : play.accuracy * 100).toFixed(2) + '%'
       : '—';
     const combo  = play.combo ?? play.max_combo ?? '—';
     const pp     = play.pp != null ? Math.round(play.pp) : '—';
-    const rank   = (play.rank ?? '?').replace('+', 'plus');
-    const title  = escHtml(play.title ?? 'Unknown');
+    const title  = escHtml(play.beatmap_title ?? play.title ?? 'Unknown');
     const diff   = escHtml(play.version ?? play.difficulty ?? '');
     const mapper = escHtml(play.mapper ?? play.creator ?? '');
     const date   = play.date ?? play.created_at ?? '';
-    const href   = play.beatmap_id
-      ? `https://osu.ppy.sh/b/${play.beatmap_id}`
-      : `https://osu.ppy.sh/beatmapsets/${play.beatmapset_id}`;
+    const href   = `https://osu.ppy.sh/b/${play.beatmap_id}`;
 
     return `
       <a class="play-card" href="${href}" target="_blank" rel="noopener">
@@ -1338,10 +1336,9 @@ function buildTopPlays(rawPlays) {
             <div class="play-info">
               <div class="play-title">${title}</div>
               <div class="play-diff">[${diff}]${mapper ? ` · mapped by ${mapper}` : ''}</div>
-              ${mods.length ? `<div class="play-mods">${mods.map(m => `<span class="mod-badge">${escHtml(String(m))}</span>`).join('')}</div>` : ''}
+              ${modsStr ? `<div class="play-mods"><span class="mod-badge">${escHtml(modsStr)}</span></div>` : ''}
             </div>
             <div class="play-stats">
-              <div class="play-rank-grade rank-${rank}">${play.rank ?? '?'}</div>
               <div class="play-pp">${pp}<sup>pp</sup></div>
               <div class="play-sub">${acc}</div>
               <div class="play-sub">${combo}x</div>
