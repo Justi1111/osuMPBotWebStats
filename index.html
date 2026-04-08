@@ -870,6 +870,186 @@
 
     .play-rank-grade { font-size: 22px; font-weight: 900; line-height: 1; }
 
+    /* ── ROOM TOP PLAYS PODIUM ── */
+    .podium-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-rows: auto auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    /* #1 spans first row full width centred, visually taller */
+    .podium-card {
+      position: relative;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      transition: transform .2s, box-shadow .2s, border-color .2s;
+      cursor: pointer;
+    }
+
+    .podium-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255,102,171,.45);
+      box-shadow: 0 8px 32px rgba(255,102,171,.15);
+    }
+
+    .podium-card--1 {
+      grid-column: 2;
+      grid-row: 1;
+      border-color: rgba(255,215,0,.35);
+      box-shadow: 0 0 20px rgba(255,215,0,.08);
+    }
+
+    .podium-card--1:hover {
+      border-color: rgba(255,215,0,.6);
+      box-shadow: 0 8px 32px rgba(255,215,0,.18);
+    }
+
+    .podium-card--2 { grid-column: 1; grid-row: 1; }
+    .podium-card--3 { grid-column: 3; grid-row: 1; }
+
+    .podium-card-bg {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      filter: blur(5px) brightness(0.28);
+      transform: scale(1.08);
+      z-index: 0;
+    }
+
+    .podium-card-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(160deg, rgba(26,23,32,.92) 0%, rgba(26,23,32,.65) 100%);
+      z-index: 1;
+    }
+
+    .podium-card-inner {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      padding: 14px 14px 10px;
+      gap: 6px;
+      height: 100%;
+    }
+
+    .podium-card--1 .podium-card-inner { padding: 18px 18px 12px; }
+
+    .podium-medal {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .podium-medal--1 { color: #ffd700; }
+    .podium-medal--2 { color: #b0b8c8; }
+    .podium-medal--3 { color: #cd7f32; }
+
+    .podium-rank-grade {
+      font-size: 20px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .podium-card--1 .podium-rank-grade { font-size: 26px; }
+
+    .podium-player {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--pink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .podium-card--1 .podium-player { font-size: 13px; }
+
+    .podium-map-title {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .podium-diff {
+      font-size: 10px;
+      color: var(--text3);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .podium-pp {
+      font-size: 22px;
+      font-weight: 800;
+      background: var(--grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      margin-top: 2px;
+    }
+
+    .podium-card--1 .podium-pp { font-size: 30px; }
+
+    .podium-pp sup {
+      font-size: 11px;
+      font-weight: 700;
+      -webkit-text-fill-color: var(--text3);
+    }
+
+    .podium-meta {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .podium-sub {
+      font-size: 11px;
+      color: var(--text2);
+    }
+
+    .podium-footer {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-wrap: wrap;
+      margin-top: 2px;
+    }
+
+    .podium-empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text3);
+      font-size: 13px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+
+    @media (max-width: 640px) {
+      .podium-wrap {
+        grid-template-columns: 1fr;
+        align-items: start;
+      }
+      .podium-card--1,
+      .podium-card--2,
+      .podium-card--3 { grid-column: 1; grid-row: auto; }
+    }
+
     /* ── SCROLLBAR ── */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -936,7 +1116,10 @@
     <p class="section-title">Overview</p>
     <div class="stats-grid" id="statsGrid"></div>
 
-    <p class="section-title" style="margin-top:8px">Top Maps by Play Count</p>
+    <p class="section-title" style="margin-top:28px">Top Plays</p>
+    <div class="podium-wrap" id="roomTopPlays"></div>
+
+    <p class="section-title" style="margin-top:28px">Top Maps by Play Count</p>
     <div class="map-list">
       <div class="map-list-header">Maps played this session</div>
       <div id="mapList"></div>
@@ -1142,6 +1325,62 @@ function setupRowClick() {
 }
 
 // ── Room Stats tab ─────────────────────────────────────
+function buildRoomTopPlays(rawPlays) {
+  const el = document.getElementById('roomTopPlays');
+  if (!rawPlays) { el.innerHTML = ''; return; }
+
+  const plays = (Array.isArray(rawPlays) ? rawPlays : Object.values(rawPlays))
+    .filter(Boolean)
+    .sort((a, b) => (b.pp ?? 0) - (a.pp ?? 0))
+    .slice(0, 3);
+
+  if (!plays.length) { el.innerHTML = ''; return; }
+
+  const medals  = ['#1', '#2', '#3'];
+  const mCls    = ['1', '2', '3'];
+  const mLabels = ['🥇 1st', '🥈 2nd', '🥉 3rd'];
+  const rankColor = { SS:'#ffd700', S:'#60a5fa', A:'#4ade80', B:'#9ca3af', C:'#9ca3af', D:'#9ca3af' };
+
+  el.innerHTML = plays.map((play, i) => {
+    const n       = i + 1;
+    const bg      = `https://assets.ppy.sh/beatmaps/${play.beatmapset_id}/covers/cover.jpg`;
+    const pp      = play.pp != null ? Math.round(play.pp) : '—';
+    const acc     = play.accuracy != null
+      ? (play.accuracy > 1 ? +play.accuracy : play.accuracy * 100).toFixed(2) + '%' : '—';
+    const combo   = play.combo ?? play.max_combo ?? '—';
+    const rank    = play.rank ?? '';
+    const rColor  = rankColor[rank] ?? 'var(--text3)';
+    const title   = escHtml(play.beatmap_title ?? play.title ?? 'Unknown');
+    const diff    = escHtml(play.version ?? play.difficulty ?? '');
+    const player  = escHtml(play.username ?? play.player ?? '');
+    const modsStr = typeof play.mods === 'string' ? play.mods.replace(/,/g, '') : '';
+    const href    = `https://osu.ppy.sh/b/${play.beatmap_id}`;
+
+    return `
+      <a class="podium-card podium-card--${n}" href="${href}" target="_blank" rel="noopener">
+        <div class="podium-card-bg" style="background-image:url('${bg}')"></div>
+        <div class="podium-card-overlay"></div>
+        <div class="podium-card-inner">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+            <span class="podium-medal podium-medal--${n}">${mLabels[i]}</span>
+            ${rank ? `<span class="podium-rank-grade" style="color:${rColor}">${rank}</span>` : ''}
+          </div>
+          <div class="podium-pp">${pp}<sup>pp</sup></div>
+          ${player ? `<div class="podium-player">${player}</div>` : ''}
+          <div class="podium-map-title">${title}</div>
+          ${diff ? `<div class="podium-diff">[${diff}]</div>` : ''}
+          <div class="podium-footer">
+            <span class="podium-sub">${acc}</span>
+            <span class="podium-sub">·</span>
+            <span class="podium-sub">${combo}x</span>
+            ${modsStr ? `<span class="mod-badge">${escHtml(modsStr)}</span>` : ''}
+            ${play.is_fc ? `<span class="mod-badge mod-badge--fc">FC</span>` : ''}
+          </div>
+        </div>
+      </a>`;
+  }).join('');
+}
+
 function buildRoom(data) {
   const r = data.room_stats ?? {};
 
@@ -1179,6 +1418,8 @@ function buildRoom(data) {
         <div class="map-count">${m.times_played}×</div>
       </a>`).join('')
     : '<div class="map-item" style="color:var(--text3);font-size:13px">No maps recorded yet</div>';
+
+  buildRoomTopPlays(data.top_plays);
 }
 
 // ── Bug Reports tab ────────────────────────────────────
