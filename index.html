@@ -1325,12 +1325,16 @@ function setupRowClick() {
 }
 
 // ── Room Stats tab ─────────────────────────────────────
-function buildRoomTopPlays(rawPlays) {
+function buildRoomTopPlays(players) {
   const el = document.getElementById('roomTopPlays');
-  if (!rawPlays) { el.innerHTML = ''; return; }
+  if (!players) { el.innerHTML = ''; return; }
 
-  const plays = (Array.isArray(rawPlays) ? rawPlays : Object.values(rawPlays))
-    .filter(Boolean)
+  // Collect all top_plays from every player, tag with username
+  const plays = Object.entries(players).flatMap(([username, p]) => {
+    if (!p.top_plays) return [];
+    const arr = Array.isArray(p.top_plays) ? p.top_plays : Object.values(p.top_plays);
+    return arr.filter(Boolean).map(play => ({ ...play, username: play.username ?? username }));
+  })
     .sort((a, b) => (b.pp ?? 0) - (a.pp ?? 0))
     .slice(0, 3);
 
@@ -1419,7 +1423,7 @@ function buildRoom(data) {
       </a>`).join('')
     : '<div class="map-item" style="color:var(--text3);font-size:13px">No maps recorded yet</div>';
 
-  buildRoomTopPlays(data.top_plays);
+  buildRoomTopPlays(data.players);
 }
 
 // ── Bug Reports tab ────────────────────────────────────
