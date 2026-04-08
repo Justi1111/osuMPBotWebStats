@@ -1358,8 +1358,9 @@ function buildRoomTopPlays(players) {
     const combo   = play.combo ?? play.max_combo ?? '—';
     const rank    = play.rank ?? '';
     const rColor  = rankColor[rank] ?? 'var(--text3)';
-    const title   = escHtml(play.beatmap_title ?? play.title ?? 'Unknown');
-    const diff    = escHtml(play.version ?? play.difficulty ?? '');
+    const parsed  = parseTitle(play.beatmap_title ?? play.title ?? 'Unknown');
+    const title   = escHtml(parsed.title);
+    const diff    = escHtml(play.version ?? play.difficulty ?? parsed.diff);
     const player  = escHtml(play.username ?? play.player ?? '');
     const modsStr = typeof play.mods === 'string' ? play.mods.replace(/,/g, '') : '';
     const href    = `https://osu.ppy.sh/b/${play.beatmap_id}`;
@@ -1463,6 +1464,14 @@ function escHtml(str) {
   return String(str)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;')
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Parse "Song Name [Diff]" → { title, diff }
+function parseTitle(raw) {
+  const str = raw ?? '';
+  const m = str.match(/^(.*)\[([^\[\]]+)\]\s*$/);
+  if (m) return { title: m[1].trim(), diff: m[2].trim() };
+  return { title: str, diff: '' };
 }
 
 // ── Player detail panel ───────────────────────────────
@@ -1590,8 +1599,9 @@ function buildTopPlays(rawPlays) {
     const pp     = play.pp != null ? Math.round(play.pp) : '—';
     const rank   = play.rank ?? '';
     const stars  = play.stars != null ? `★ ${(+play.stars).toFixed(2)}` : '';
-    const title  = escHtml(play.beatmap_title ?? play.title ?? 'Unknown');
-    const diff   = escHtml(play.version ?? play.difficulty ?? '');
+    const parsed = parseTitle(play.beatmap_title ?? play.title ?? 'Unknown');
+    const title  = escHtml(parsed.title);
+    const diff   = escHtml(play.version ?? play.difficulty ?? parsed.diff);
     const mapper = escHtml(play.mapper ?? play.creator ?? '');
     const date   = play.date ?? play.created_at ?? '';
     const href   = `https://osu.ppy.sh/b/${play.beatmap_id}`;
