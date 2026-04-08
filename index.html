@@ -1257,7 +1257,10 @@ function rankSort(list) {
 }
 
 function renderTable(list) {
-  const sorted = sortPlayers(list, sortCol, sortDir);
+  // When sorting by wins use rankSort (applies tiebreakers); reverse for asc
+  const sorted = (sortCol === 'wins')
+    ? (sortDir === 'desc' ? rankSort(list) : rankSort(list).reverse())
+    : sortPlayers(list, sortCol, sortDir);
   const tbody = document.getElementById('playerTableBody');
 
   if (sorted.length === 0) {
