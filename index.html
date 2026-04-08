@@ -1247,10 +1247,11 @@ function sortPlayers(list, col, dir) {
 }
 
 // Sort by wins desc, then matches_played desc, then time_in_lobby desc
+// Wins DESC → matches_played ASC (fewer matches = higher winrate) → time_in_lobby DESC
 function rankSort(list) {
   return [...list].sort((a, b) =>
     b.wins - a.wins ||
-    b.matches_played - a.matches_played ||
+    a.matches_played - b.matches_played ||
     b.time_in_lobby - a.time_in_lobby
   );
 }
